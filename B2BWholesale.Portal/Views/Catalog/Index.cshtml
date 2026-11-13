@@ -1,0 +1,60 @@
+@model List<Item>
+@{
+    ViewData["Title"] = "Catalog";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h2 class="mb-0"><i class="bi bi-grid"></i> Product catalog</h2>
+    <div class="d-flex gap-2">
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="q" value="@ViewData["Query"]" class="form-control" placeholder="Search item or size" />
+            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+        </form>
+        <a class="btn btn-success" asp-controller="Orders" asp-action="Create"><i class="bi bi-cart-plus"></i> Place order</a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Item</th>
+                    <th>Size</th>
+                    <th class="text-end">Unit price (VND)</th>
+                    <th class="text-end">Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var i in Model)
+            {
+                <tr>
+                    <td>@i.ItemID</td>
+                    <td>@i.ItemName</td>
+                    <td>@i.Size</td>
+                    <td class="text-end">@i.Price.ToString("N0")</td>
+                    <td class="text-end">
+                        @if (i.StockQuantity == 0)
+                        {
+                            <span class="badge text-bg-danger">Out of stock</span>
+                        }
+                        else if (i.StockQuantity < 50)
+                        {
+                            <span class="badge text-bg-warning">@i.StockQuantity left</span>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-success">@i.StockQuantity</span>
+                        }
+                    </td>
+                </tr>
+            }
+            @if (Model.Count == 0)
+            {
+                <tr><td colspan="5" class="text-center text-muted py-4">No items found.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

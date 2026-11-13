@@ -1,0 +1,16 @@
+@model string
+@{
+    var cls = Model switch
+    {
+        "Shipped"   => "text-bg-success",
+        "Cancelled" => "text-bg-danger",
+        _           => "text-bg-warning"   // Pending
+    };
+    var icon = Model switch
+    {
+        "Shipped"   => "bi-truck",
+        "Cancelled" => "bi-x-circle",
+        _           => "bi-hourglass-split"
+    };
+}
+<span class="badge @cls"><i class="bi @icon"></i> @Model</span>

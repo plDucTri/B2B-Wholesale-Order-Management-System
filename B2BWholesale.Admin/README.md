@@ -2,7 +2,7 @@
 
 ## Setup
 1. SQL Server: run `database.sql`, then `sql/02_set_demo_passwords.sql`.
-2. Edit `appsettings.json` if your SQL Server is not `localhost` with Windows auth.
+2. Edit `App.config` if your SQL Server is not `localhost`.
 3. Visual Studio 2022 (.NET 8 SDK): open the folder, restore NuGet, run.
 4. Login: `admin` / `Admin@123` (agents use `Agent@123` but are rejected here: Admin only).
 
@@ -15,7 +15,7 @@
 | 1.4 Dashboard | `Forms/DashboardForm.cs` |
 
 ## Rules implemented
-- Pending -> Shipped deducts stock in one transaction (fails if stock is short). Shipped/Cancelled are final.
+- Stock is deducted by the web portal when an order is placed. Shipped only changes the status. Cancelled returns the quantities to stock.
 - Revenue = Shipped orders only; best-selling = all non-cancelled orders.
 - All SQL is parameterised.
 - **Agree with the web-portal team**: same password format (`PasswordHasher`), and whether the portal also

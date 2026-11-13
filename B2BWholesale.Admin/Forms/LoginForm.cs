@@ -22,7 +22,9 @@ public class LoginForm : Form
         {
             Text = "Warehouse Back-Office",
             Font = new Font(Font.FontFamily, 13, FontStyle.Bold),
-            Dock = DockStyle.Top, Height = 45, TextAlign = ContentAlignment.MiddleCenter
+            Dock = DockStyle.Top,
+            Height = 45,
+            TextAlign = ContentAlignment.MiddleCenter
         };
 
         var table = UiHelper.FieldTable();
@@ -76,7 +78,7 @@ public class LoginForm : Form
         }
         catch (Exception ex)
         {
-            UiHelper.Error("Cannot connect to the database. Check appsettings.json.\n\n" + ex.Message);
+            UiHelper.Error("Cannot connect to the database. Check App.config.\n\n" + ex.Message);
         }
     }
 

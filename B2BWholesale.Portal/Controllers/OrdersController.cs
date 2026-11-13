@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace B2BWholesale.Portal.Controllers;
 
-/// <summary>Task 3.2 - place a master-detail order. (Task 3.3 "My Orders" will add Index/Invoice here.)</summary>
+/// <summary>Task 3.2 - place a master-detail order. Task 3.3 - "My Orders" list and printable invoice.</summary>
 [Authorize(Roles = "Agent")]
 public class OrdersController : Controller
 {
@@ -19,6 +19,38 @@ public class OrdersController : Controller
     {
         _db = db;
         _orders = orders;
+    }
+
+    /// <summary>Task 3.3 - the logged-in agent's past orders (newest first), optionally filtered by status.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Index(string? status = null)
+    {
+        var agentId = User.GetAgentId();
+
+        var query = _db.Orders.AsNoTracking()
+            .Include(o => o.OrderDetails)
+            .Where(o => o.AgentID == agentId);
+
+        if (!string.IsNullOrWhiteSpace(status) && status != "All")
+            query = query.Where(o => o.OrderStatus == status);
+
+        var orders = await query.OrderByDescending(o => o.OrderDate).ThenByDescending(o => o.OrderID).ToListAsync();
+
+        ViewData["Status"] = string.IsNullOrWhiteSpace(status) ? "All" : status;
+        return View(orders);
+    }
+
+    /// <summary>Task 3.3 - printable invoice (HTML/CSS print media). Agents can only open their own orders.</summary>
+    [HttpGet]
+    public async Task<IActionResult> Invoice(int id)
+    {
+        var agentId = User.GetAgentId();
+        var order = await _db.Orders.AsNoTracking()
+            .Include(o => o.Agent)
+            .Include(o => o.OrderDetails).ThenInclude(d => d.Item)
+            .FirstOrDefaultAsync(o => o.OrderID == id && o.AgentID == agentId);
+
+        return order is null ? NotFound() : View(order);
     }
 
     [HttpGet]

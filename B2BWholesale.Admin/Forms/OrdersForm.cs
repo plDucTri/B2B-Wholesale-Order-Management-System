@@ -8,7 +8,8 @@ namespace B2BWholesale.Admin.Forms;
 /// <summary>
 /// Task 1.2 (orders) + Task 1.3 (manifest). Lists incoming web orders, shows their lines,
 /// updates status and prints the shipping manifest.
-/// Business rule: Pending -> Shipped deducts stock (rejected if insufficient); Shipped/Cancelled are final.
+/// Business rule: stock is deducted when the agent places the order (web portal, Task 3.2).
+/// Pending -> Shipped only changes the status; Pending -> Cancelled returns the stock; Shipped/Cancelled are final.
 /// </summary>
 public class OrdersForm : Form
 {
@@ -123,7 +124,7 @@ public class OrdersForm : Form
         if (CurrentOrderId is not int id) { UiHelper.Warn("Select an order first."); return; }
         var newStatus = cboNewStatus.Text;
         if (!UiHelper.Confirm($"Mark order #{id} as {newStatus}?" +
-                              (newStatus == "Shipped" ? "\nStock will be deducted." : ""))) return;
+                              (newStatus == "Cancelled" ? "\nThe ordered quantities will be returned to stock." : ""))) return;
 
         try
         {
@@ -136,21 +137,21 @@ public class OrdersForm : Form
                 if (current != "Pending")
                     throw new InvalidOperationException($"Order is already {current}; its status can no longer change.");
 
-                if (newStatus == "Shipped")
+                // Stock was already deducted when the agent placed the order on the portal, so
+                // Shipped changes nothing in Item. Cancelled must give that stock back.
+                if (newStatus == "Cancelled")
                 {
-                    var lines = new List<(int ItemId, int Qty, string Name)>();
+                    var lines = new List<(int ItemId, int Qty)>();
                     using (var rd = Db.Cmd(con, tx,
-                        "SELECT od.ItemID, od.Quantity, i.ItemName FROM OrderDetail od " +
-                        "JOIN Item i ON i.ItemID = od.ItemID WHERE od.OrderID=@id", Db.P("@id", id)).ExecuteReader())
+                        "SELECT ItemID, Quantity FROM OrderDetail WHERE OrderID=@id", Db.P("@id", id)).ExecuteReader())
                     {
-                        while (rd.Read()) lines.Add((rd.GetInt32(0), rd.GetInt32(1), rd.GetString(2)));
+                        while (rd.Read()) lines.Add((rd.GetInt32(0), rd.GetInt32(1)));
                     }
                     foreach (var l in lines)
                     {
-                        var ok = Db.Cmd(con, tx,
-                            "UPDATE Item SET StockQuantity = StockQuantity - @q WHERE ItemID=@i AND StockQuantity >= @q",
+                        Db.Cmd(con, tx,
+                            "UPDATE Item SET StockQuantity = StockQuantity + @q WHERE ItemID=@i",
                             Db.P("@q", l.Qty), Db.P("@i", l.ItemId)).ExecuteNonQuery();
-                        if (ok == 0) throw new InvalidOperationException($"Not enough stock for '{l.Name}' (need {l.Qty}).");
                     }
                 }
 

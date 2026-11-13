@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="B2BWholesale.Admin/B2BWholesale.Admin.csproj" />
+  <Project Path="B2BWholesale.Portal/B2BWholesale.Portal.csproj" />
+</Solution>

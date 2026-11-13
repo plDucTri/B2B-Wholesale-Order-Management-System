@@ -1,0 +1,83 @@
+@model Order
+@{
+    ViewData["Title"] = $"Invoice #{Model.OrderID}";
+    var total = Model.OrderDetails.Sum(d => d.LineTotal);
+}
+
+@section Styles {
+    <style>
+        @@media print {
+            @@page { size: A4; margin: 15mm; }
+            body { background: #fff !important; }
+            nav.navbar, .no-print, .alert { display: none !important; }
+            main.container { max-width: 100% !important; padding: 0 !important; }
+            #invoice { border: 0 !important; box-shadow: none !important; }
+            .table > :not(caption) > * > * { background-color: transparent !important; }
+        }
+    </style>
+}
+
+<div class="no-print d-flex flex-wrap gap-2 mb-3">
+    <button type="button" class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> Print / Save as PDF</button>
+    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left"></i> Back to my orders</a>
+</div>
+
+<div id="invoice" class="card shadow-sm">
+    <div class="card-body p-4 p-md-5">
+        <div class="d-flex flex-wrap justify-content-between gap-3 mb-4">
+            <div>
+                <h3 class="mb-0"><i class="bi bi-box-seam"></i> B2B Wholesale</h3>
+                <div class="text-muted">Order management system</div>
+            </div>
+            <div class="text-md-end">
+                <h4 class="mb-1">INVOICE #@Model.OrderID</h4>
+                <div>Date: @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")</div>
+                <div>Status: <partial name="_StatusBadge" model="Model.OrderStatus" /></div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <div class="text-uppercase text-muted small">Bill to</div>
+            <div class="fw-semibold">@Model.Agent?.AgentName</div>
+            <div>@Model.Agent?.Address</div>
+            <div>@Model.Agent?.Phone</div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Item</th>
+                        <th>Size</th>
+                        <th class="text-end">Qty</th>
+                        <th class="text-end">Unit price (VND)</th>
+                        <th class="text-end">Amount (VND)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @{ var n = 1; }
+                @foreach (var d in Model.OrderDetails)
+                {
+                    <tr>
+                        <td>@(n++)</td>
+                        <td>@d.Item?.ItemName</td>
+                        <td>@d.Item?.Size</td>
+                        <td class="text-end">@d.Quantity</td>
+                        <td class="text-end">@d.UnitAmount.ToString("N0")</td>
+                        <td class="text-end">@d.LineTotal.ToString("N0")</td>
+                    </tr>
+                }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="5" class="text-end">Total</th>
+                        <th class="text-end">@total.ToString("N0") VND</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <p class="text-muted small mb-0 mt-4">Thank you for your business.</p>
+    </div>
+</div>

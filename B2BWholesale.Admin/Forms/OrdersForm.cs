@@ -8,8 +8,8 @@ namespace B2BWholesale.Admin.Forms;
 /// <summary>
 /// Task 1.2 (orders) + Task 1.3 (manifest). Lists incoming web orders, shows their lines,
 /// updates status and prints the shipping manifest.
-/// Business rule: stock is deducted when the agent places the order (web portal, Task 3.2).
-/// Pending -> Shipped only changes the status; Pending -> Cancelled returns the stock; Shipped/Cancelled are final.
+/// Business rule: Stock is deducted by the web portal at order time; Cancelled restores it.
+/// Shipped/Cancelled are final.
 /// </summary>
 public class OrdersForm : Form
 {
@@ -137,22 +137,13 @@ public class OrdersForm : Form
                 if (current != "Pending")
                     throw new InvalidOperationException($"Order is already {current}; its status can no longer change.");
 
-                // Stock was already deducted when the agent placed the order on the portal, so
-                // Shipped changes nothing in Item. Cancelled must give that stock back.
                 if (newStatus == "Cancelled")
                 {
-                    var lines = new List<(int ItemId, int Qty)>();
-                    using (var rd = Db.Cmd(con, tx,
-                        "SELECT ItemID, Quantity FROM OrderDetail WHERE OrderID=@id", Db.P("@id", id)).ExecuteReader())
-                    {
-                        while (rd.Read()) lines.Add((rd.GetInt32(0), rd.GetInt32(1)));
-                    }
-                    foreach (var l in lines)
-                    {
-                        Db.Cmd(con, tx,
-                            "UPDATE Item SET StockQuantity = StockQuantity + @q WHERE ItemID=@i",
-                            Db.P("@q", l.Qty), Db.P("@i", l.ItemId)).ExecuteNonQuery();
-                    }
+                    // The web portal already deducted this stock when the order was placed -> give it back.
+                    Db.Cmd(con, tx,
+                        "UPDATE i SET i.StockQuantity = i.StockQuantity + od.Quantity " +
+                        "FROM Item i JOIN OrderDetail od ON od.ItemID = i.ItemID WHERE od.OrderID = @id",
+                        Db.P("@id", id)).ExecuteNonQuery();
                 }
 
                 Db.Cmd(con, tx, "UPDATE Orders SET OrderStatus=@s WHERE OrderID=@id",

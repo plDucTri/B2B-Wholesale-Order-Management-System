@@ -1,5 +1,5 @@
+using System.Configuration;
 using System.Data;
-using System.Text.Json;
 using Microsoft.Data.SqlClient;
 
 namespace B2BWholesale.Admin.Data;
@@ -11,15 +11,10 @@ public static class Db
 
     private static string LoadConnectionString()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-        if (File.Exists(path))
-        {
-            using var doc = JsonDocument.Parse(File.ReadAllText(path));
-            if (doc.RootElement.TryGetProperty("ConnectionString", out var cs) &&
-                !string.IsNullOrWhiteSpace(cs.GetString()))
-                return cs.GetString()!;
-        }
-        throw new InvalidOperationException("appsettings.json is missing or has no ConnectionString.");
+        var cs = ConfigurationManager.ConnectionStrings["DefaultConnection"]?.ConnectionString;
+        if (string.IsNullOrWhiteSpace(cs))
+            throw new InvalidOperationException("Missing connection string 'DefaultConnection' in App.config.");
+        return cs;
     }
 
     public static SqlConnection Open()

@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Connection string comes from appsettings.json (never hardcoded).
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Missing ConnectionStrings:DefaultConnection in appsettings.json");
 

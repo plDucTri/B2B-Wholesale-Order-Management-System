@@ -19,7 +19,7 @@ public static class Db
                 !string.IsNullOrWhiteSpace(cs.GetString()))
                 return cs.GetString()!;
         }
-        return "Server=localhost;Database=WholesaleManagementDB;Trusted_Connection=True;TrustServerCertificate=True;";
+        throw new InvalidOperationException("appsettings.json is missing or has no ConnectionString.");
     }
 
     public static SqlConnection Open()
